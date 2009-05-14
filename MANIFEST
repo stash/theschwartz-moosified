@@ -22,3 +22,5 @@ t/012_scoreboard.t
 t/013_coalesce.t
 t/pod.t
 t/Utils.pm
+schema/Pg.sql
+schema/SQLite.sql
