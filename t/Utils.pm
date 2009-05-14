@@ -33,6 +33,9 @@ sub run_test (&) {
         $dbh->do("DELETE FROM $_") for qw(funcmap exitstatus error job);
         $dbh->do("ALTER SEQUENCE $_ RESTART WITH 1") for qw(job_jobid_seq funcmap_funcid_seq);
         $dbh->commit;
+        
+        ### XXX? it's bad, run twice for the same tests
+        $::prefix = ""; # no prefix for ST_CURRENT since no table available
     }
     else {
         $dbh = DBI->connect("dbi:SQLite:dbname=$tmpf", '', '', {RaiseError => 1, PrintError => 0}) or die $DBI::err;
