@@ -8,7 +8,7 @@ Standards-Version: 3.6.1
 
 Package: libtheschwartz-moosified-perl
 Architecture: all
-Depends: ${perl:Depends}, ${misc:Depends}, libscalar-list-util-perl, libdbi-perl, libmoose-perl
+Depends: ${perl:Depends}, ${misc:Depends}, libscalar-list-util-perl (>= 1.19), libdbi-perl, libmoose-perl (>= 0.79)
 Description: TheSchwartz based on Moose!
  TheSchwartz based on Moose!
  .
