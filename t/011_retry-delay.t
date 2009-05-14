@@ -5,12 +5,15 @@ use warnings;
 use t::Utils;
 use TheSchwartz::Moosified;
 
-plan tests => 11;
+plan tests => 22;
+
+foreach $::prefix ("", "someprefix") {
 
 run_test {
     my $dbh = shift;
     my $client = TheSchwartz::Moosified->new();
     $client->databases([$dbh]);
+    $client->prefix($::prefix) if $::prefix;
 
     $client->can_do("Worker::Fail");
     $client->can_do("Worker::Complete");
@@ -26,8 +29,9 @@ run_test {
             "inserted job that won't get run";
         my $h2_after = $h2->job->run_after;
 
-        my ($before_retry) = $dbh->selectall_arrayref(q{
-            SELECT * FROM job WHERE jobid=?
+        my $table_job = $client->prefix . 'job';
+        my ($before_retry) = $dbh->selectall_arrayref(qq{
+            SELECT * FROM $table_job WHERE jobid=?
         }, {}, $h2->jobid);
 
         $client->reset_abilities();
@@ -36,8 +40,8 @@ run_test {
 
         is($handle->failures, 1, "job has failed once");
 
-        my ($after_retry) = $dbh->selectall_arrayref(q{
-            SELECT * FROM job WHERE jobid=?
+        my ($after_retry) = $dbh->selectall_arrayref(qq{
+            SELECT * FROM $table_job WHERE jobid=?
         }, {}, $h2->jobid);
         is_deeply $after_retry, $before_retry,
             'odd job wasn\'t affected by the retry';
@@ -59,13 +63,15 @@ run_test {
         ok(! $handle->is_pending, "job has exited");
         is($handle->exit_status, 0, "job succeeded");
 
-        my ($far_after_retry) = $dbh->selectall_arrayref(q{
-            SELECT * FROM job WHERE jobid=?
+        my ($far_after_retry) = $dbh->selectall_arrayref(qq{
+            SELECT * FROM $table_job WHERE jobid=?
         }, {}, $h2->jobid);
         is_deeply $far_after_retry, $before_retry,
             'odd job still wasn\'t affected by the retry';
     }
 };
+
+}
 
 ############################################################################
 package Worker::CompleteEventually;

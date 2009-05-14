@@ -72,6 +72,8 @@ has 'scoreboard'  => (
     }
 );
 
+has 'prefix' => ( is => 'rw', isa => 'Str', default => '' );
+
 sub debug {
     my $self = shift;
     
@@ -98,8 +100,9 @@ sub _try_insert {
         }
         my @col = keys %$row;
 
-        my $sql = sprintf 'INSERT INTO job (%s) VALUES (%s)',
-            join( ", ", @col ), join( ", ", ("?") x @col );
+        my $table_job = $self->prefix . 'job';
+        my $sql = sprintf 'INSERT INTO %s (%s) VALUES (%s)',
+            $table_job, join( ", ", @col ), join( ", ", ("?") x @col );
 
         my $sth = $dbh->prepare_cached($sql);
         my $i = 1;
@@ -176,7 +179,8 @@ sub find_job_for_workers {
                       @$worker_classes;
 
             my $ids = join(',', @ids);
-            my $sql = qq~SELECT * FROM job WHERE funcid IN ($ids) AND run_after <= $unixtime AND grabbed_until <= $unixtime $order_by LIMIT $limit~;
+            my $table_job = $client->prefix . 'job';
+            my $sql = qq~SELECT * FROM $table_job WHERE funcid IN ($ids) AND run_after <= $unixtime AND grabbed_until <= $unixtime $order_by LIMIT $limit~;
 
             my $sth = $dbh->prepare_cached($sql);
             $sth->execute();
@@ -221,7 +225,8 @@ sub _grab_a_job {
         
         my $new_grabbed_until = $server_time + ($worker_class->grab_for || 1);
 
-        my $sql  = q~UPDATE job SET grabbed_until = ? WHERE jobid = ? AND grabbed_until = ?~;
+        my $table_job = $client->prefix . 'job';
+        my $sql  = qq~UPDATE $table_job SET grabbed_until = ? WHERE jobid = ? AND grabbed_until = ?~;
         my $sth  = $dbh->prepare($sql);
         $sth->execute($new_grabbed_until, $job->jobid, $old_grabbed_until);
         my $rows = $sth->rows;
@@ -290,7 +295,8 @@ sub list_jobs {
                 $funcop = '=';
             }
 
-            my $sql = qq~SELECT * FROM job WHERE funcid $funcop $funcid $order_by LIMIT $limit~;
+            my $table_job = $self->prefix . 'job';
+            my $sql = qq~SELECT * FROM $table_job WHERE funcid $funcop $funcid $order_by LIMIT $limit~;
             my @value = ();
             for (@options) {
                 $sql .= " AND $_->{key} $_->{op} ?";
@@ -349,7 +355,8 @@ sub _find_job_with_coalescing {
             ##    in the past).
             my $funcid = $client->funcname_to_id($dbh, $funcname);
 
-            my $sql = qq~SELECT * FROM job WHERE funcid = ? AND run_after <= $unixtime AND grabbed_until <= $unixtime AND coalesce $op ? $order_by LIMIT $limit~;
+            my $table_job = $client->prefix . 'job';
+            my $sql = qq~SELECT * FROM $table_job WHERE funcid = ? AND run_after <= $unixtime AND grabbed_until <= $unixtime AND coalesce $op ? $order_by LIMIT $limit~;
             my $sth = $dbh->prepare_cached($sql);
             $sth->execute( $funcid, $coval );
             while ( my $ref = $sth->fetchrow_hashref ) {
@@ -465,6 +472,7 @@ sub funcname_to_id {
 
     my $dbid  = refaddr $dbh;
     my $cache = $self->_funcmap_cache($dbh);
+    my $table_funcmap = $self->prefix . 'funcmap';
 
     unless ( exists $cache->{funcname2id}{$funcname} ) {
         my $id;
@@ -472,7 +480,7 @@ sub funcname_to_id {
             run_in_txn {
                 ## This might fail in a race condition since funcname is UNIQUE
                 my $sth = $dbh->prepare_cached(
-                    'INSERT INTO funcmap (funcname) VALUES (?)');
+                    "INSERT INTO $table_funcmap (funcname) VALUES (?)");
                 $sth->execute($funcname);
 
                 $id = insert_id( $dbh, $sth, "funcmap", "funcid" );
@@ -482,7 +490,7 @@ sub funcname_to_id {
         ## If we got an exception, try to load the record again
         if ($@) {
             my $sth = $dbh->prepare_cached(
-                'SELECT funcid FROM funcmap WHERE funcname = ?');
+                "SELECT funcid FROM $table_funcmap WHERE funcname = ?");
             $sth->execute($funcname);
             $id = $sth->fetchrow_arrayref->[0]
                 or croak "Can't find or create funcname $funcname: $@";
@@ -499,9 +507,10 @@ sub funcname_to_id {
 sub _funcmap_cache {
     my ( $client, $dbh ) = @_;
     my $dbid = refaddr $dbh;
+    my $table_funcmap = $client->prefix . 'funcmap';
     unless ( exists $client->funcmap_cache->{$dbid} ) {
         my $cache = { funcname2id => {}, funcid2name => {} };
-        my $sth = $dbh->prepare_cached('SELECT funcid, funcname FROM funcmap');
+        my $sth = $dbh->prepare_cached("SELECT funcid, funcname FROM $table_funcmap");
         $sth->execute;
         while ( my $row = $sth->fetchrow_arrayref ) {
             $cache->{funcname2id}{ $row->[1] } = $row->[0];
@@ -675,6 +684,12 @@ control the debug.
         my $msg = shift;
         print STDERR "[INFO] $msg\n";
     } );
+
+=item * C<prefix>
+
+    my $client = TheSchwartz::Moosified->new( prefix => 'theschwartz_' );
+
+optional. table prefix. compatible with L<TheSchwartz::Simple>
 
 =item * C<scoreboard>
 

@@ -2,12 +2,15 @@ use strict;
 use warnings;
 use t::Utils;
 use TheSchwartz::Moosified;
-plan tests => 25;
+plan tests => 50;
+
+foreach $::prefix ("", "someprefix") {
 
 run_test {
     my $dbh = shift;
     my $sch = TheSchwartz::Moosified->new();
     $sch->databases([$dbh]);
+    $sch->prefix($::prefix) if $::prefix;
 
     $sch->insert('fetch', 'http://wassr.jp/');
     $sch->insert(
@@ -37,6 +40,7 @@ run_test {
     
     # test priority
     my $sch2 = TheSchwartz::Moosified->new( databases => [ $dbh ], prioritize => 1 );
+    $sch2->prefix($::prefix) if $::prefix;
     
     $sch2->insert('fetch2', 'http://fayland.org/');
     $sch2->insert(
@@ -74,3 +78,5 @@ run_test {
     is $row->priority, 2;
 
 };
+
+}

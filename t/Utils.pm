@@ -40,10 +40,14 @@ sub run_test (&) {
         # work around for DBD::SQLite's resource leak
         tie my %blackhole, 't::Utils::Blackhole';
         $dbh->{CachedKids} = \%blackhole;
+        
+        my $schema = $SCHEMA;
+        my $prefix = $::prefix || "";
+        $schema =~ s/create\s+table\s+/CREATE TABLE $prefix/gi;
 
         do {
             $dbh->begin_work;
-            for (split /;\s*/, $SCHEMA) {
+            for (split /;\s*/, $schema) {
                 $dbh->do($_);
             }
             $dbh->commit;

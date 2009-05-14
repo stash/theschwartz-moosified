@@ -1,5 +1,8 @@
 Revision history for TheSchwartz-Moosified
 
+0.05
+        Support prefix (Thanks to Mark Fowler and Tatsuhiko Miyagawa, From TheSchwartz::Simple)
+
 0.04    2009.5.11
         Improve support for PostgreSQL.
         Fix a retry_after bug that accidentally updated all jobs' run_after time.
