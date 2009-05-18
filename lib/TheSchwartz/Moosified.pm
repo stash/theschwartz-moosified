@@ -115,7 +115,7 @@ sub _try_insert {
         }
         $sth->execute();
 
-        my $jobid = insert_id( $dbh, $sth, "job", "jobid" );
+        my $jobid = insert_id( $dbh, $sth, $table_job, "jobid" );
         $job->jobid($jobid);
     } $dbh;
 }
@@ -281,7 +281,6 @@ sub list_jobs {
 
     my @jobs;
     for my $dbh ( $self->shuffled_databases ) {
-        #my $order_by = $self->prioritize ? 'ORDER BY priority DESC' : '';
         my $order_by = $self->prioritize ? order_by_priority($dbh) : '';
 
         eval {
@@ -483,7 +482,7 @@ sub funcname_to_id {
                     "INSERT INTO $table_funcmap (funcname) VALUES (?)");
                 $sth->execute($funcname);
 
-                $id = insert_id( $dbh, $sth, "funcmap", "funcid" );
+                $id = insert_id( $dbh, $sth, $table_funcmap, "funcid" );
             } $dbh;
         };
 
