@@ -35,18 +35,41 @@ sub run_test (&) {
         system("$createdb -E UTF-8 -q $dbname")
             and die "can't create db '$dbname' with '$createdb'";
 
-        $dbh = DBI->connect("dbi:Pg:database=$dbname", $ENV{user}, '', {AutoCommit => 1, RaiseError => 0, PrintError => 0}) or die $DBI::errstr;
+        $dbh = DBI->connect("dbi:Pg:database=$dbname", $ENV{user}, '', {
+                AutoCommit => 1,
+                RaiseError => 0,
+                PrintError => 0,
+            }) or die $DBI::errstr;
     }
     else {
         $dbname = $tmp->filename;
-        $dbh = DBI->connect("dbi:SQLite:dbname=$dbname", '', '', {RaiseError => 1, PrintError => 0}) or die $DBI::err;
+        $dbh = DBI->connect("dbi:SQLite:dbname=$dbname", '', '', {
+                RaiseError => 1,
+                PrintError => 0,
+            }) or die $DBI::err;
 
         # work around for DBD::SQLite's resource leak
         tie my %blackhole, 't::Utils::Blackhole';
         $dbh->{CachedKids} = \%blackhole;
     }
 
-    my $schemafile = 'schema/'.$dbh->{Driver}{Name}.'.sql';
+    init_schwartz($dbh);
+
+    $code->($dbh); # do test
+
+    $dbh->disconnect;
+
+    if ($ENV{TSM_TEST_PG}) {
+        my $dropdb = $ENV{PGDROPDB} || 'dropdb';
+        system("$dropdb -q $dbname");
+    }
+}
+
+sub init_schwartz {
+    my $dbh = shift;
+    my $name = $dbh->{Driver}{Name};
+
+    my $schemafile = "schema/$name.sql";
     my $schema = do { local(@ARGV,$/)=$schemafile; <> };
     die "Schmema not found" unless $schema;
     my $prefix = $::prefix || "";
@@ -59,15 +82,6 @@ sub run_test (&) {
         }
         $dbh->commit;
     };
-
-    $code->($dbh); # do test
-
-    $dbh->disconnect;
-
-    if ($ENV{TSM_TEST_PG}) {
-        my $dropdb = $ENV{PGDROPDB} || 'dropdb';
-        system("$dropdb -q $dbname");
-    }
 }
 
 {
