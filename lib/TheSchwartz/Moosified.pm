@@ -225,16 +225,19 @@ sub _grab_a_job {
         
         my $new_grabbed_until = $server_time + ($worker_class->grab_for || 1);
 
+        # Prevent a condition that could result in more than one client
+        # grabbing the same job b/c it doesn't look grabbed
+        next JOB if ($new_grabbed_until == $old_grabbed_until);
+
+        ## Update the job in the database, and end the transaction.
+
         my $table_job = $client->prefix . 'job';
         my $sql  = qq~UPDATE $table_job SET grabbed_until = ? WHERE jobid = ? AND grabbed_until = ?~;
         my $sth  = $dbh->prepare($sql);
         $sth->execute($new_grabbed_until, $job->jobid, $old_grabbed_until);
         my $rows = $sth->rows;
 
-        ## Update the job in the database, and end the transaction.
-        if ($rows < 1) {
-            next JOB;
-        }
+        next JOB unless $rows == 1;
         
         $job->grabbed_until( $new_grabbed_until );
 
