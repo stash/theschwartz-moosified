@@ -2,7 +2,7 @@ package TheSchwartz::Moosified::Job;
 
 use Moose;
 use Storable ();
-use TheSchwartz::Moosified::Utils qw/sql_for_unixtime run_in_txn select_for_update/;
+use TheSchwartz::Moosified::Utils qw/sql_for_unixtime run_in_txn/;
 use TheSchwartz::Moosified::JobHandle;
 
 has 'jobid'         => ( is => 'rw', isa => 'Int' );
@@ -120,24 +120,34 @@ sub set_exit_status {
     my $class = $job->funcname;
     my $secs = $class->keep_exit_status_for or return;
 
+    my $t = time();
     my $jobid = $job->jobid;
+    my $funcid = $job->funcid;
+    my @status = ($exit, $t, $t + $secs);
     my $dbh = $job->dbh;
     my $table_exitstatus = $job->handle->client->prefix . 'exitstatus';
     my $needs_update = 0;
     {
-        my $sth = $job->dbh->prepare(
-            qq~SELECT 1 FROM $table_exitstatus WHERE jobid=?~ . select_for_update($dbh)
-        );
-        $sth->execute($jobid);
-        ($needs_update) = $sth->fetchrow_array;
+        my $sth = $dbh->prepare(qq{
+            INSERT INTO $table_exitstatus
+            (funcid, status, completion_time, delete_after, jobid)
+            SELECT ?, ?, ?, ?, ?
+            WHERE NOT EXISTS (
+                SELECT 1 FROM $table_exitstatus WHERE jobid = ?
+            )
+        });
+        $sth->execute($funcid, @status, $jobid, $jobid);
+        $needs_update = ($sth->rows == 0);
     }
-
-    # note params are the same order for both queries:
-    my $sql = ($needs_update) ?
-        qq~UPDATE $table_exitstatus SET funcid=?, status=?, completion_time=?, delete_after=? WHERE jobid=?~ :
-        qq~INSERT INTO $table_exitstatus (funcid, status, completion_time, delete_after, jobid) VALUES (?, ?, ?, ?, ?)~ ;
-    my $t = time();
-    $dbh->do($sql, {}, $job->funcid, $exit, $t, $t + $secs, $jobid);
+    if ($needs_update) {
+        # only update if this status is newest
+        my $sth = $dbh->prepare(qq{
+            UPDATE $table_exitstatus
+            SET status=?, completion_time=?, delete_after=?
+            WHERE jobid = ? AND completion_time < ?
+        });
+        $sth->execute(@status, $jobid, $t);
+    }
 
     # and let's lazily clean some exitstatus while we're here.  but
     # rather than doing this query all the time, we do it 1/nth of the

@@ -4,7 +4,7 @@ use base 'Exporter';
 use Carp;
 use vars qw/@EXPORT_OK/;
 
-@EXPORT_OK = qw/insert_id sql_for_unixtime bind_param_attr run_in_txn select_for_update order_by_priority/;
+@EXPORT_OK = qw/insert_id sql_for_unixtime bind_param_attr run_in_txn order_by_priority/;
 
 sub insert_id {
     my ( $dbh, $sth, $table, $col ) = @_;
@@ -56,18 +56,6 @@ sub bind_param_attr {
         return DBI::SQL_BLOB();
     }
     return;
-}
-
-sub select_for_update {
-    my $dbh = shift;
-    my $driver = $dbh->{Driver}{Name};
-    if ( !$driver or $driver eq 'SQLite' ) {
-        return '';
-    }
-    else {
-        # at least Pg, mysql, and oracle support FOR UPDATE:
-        return ' FOR UPDATE';
-    }
 }
 
 sub order_by_priority {
