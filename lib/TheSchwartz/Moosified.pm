@@ -667,7 +667,7 @@ read more on L<TheSchwartz>
 
 =item * C<databases>
 
-An arrayref of dbh.
+Databases containing TheSchwartz jobs, shuffled before each use.
 
     my $dbh1 = DBI->conncet(@dbi_info);
     my $dbh2 = $schema->storage->dbh;
@@ -679,7 +679,7 @@ An arrayref of dbh.
 
 =item * C<verbose>
 
-control the debug.
+controls debug logging.
 
     my $client = TheSchwartz::Moosified->new( verbose => 1 );
     
@@ -693,9 +693,9 @@ control the debug.
 
 =item * C<prefix>
 
-    my $client = TheSchwartz::Moosified->new( prefix => 'theschwartz_' );
+optional prefix for tables. compatible with L<TheSchwartz::Simple>
 
-optional. table prefix. compatible with L<TheSchwartz::Simple>
+    my $client = TheSchwartz::Moosified->new( prefix => 'theschwartz_' );
 
 =item * C<scoreboard>
 
@@ -707,6 +707,12 @@ save job info to file. by default, the file will be saved at $tmpdir/theschwartz
     my $client = TheSchwartz::Moosified->new();
     # be sure the file is there
     $client->scoreboard( "/home/fayland/theschwartz/scoreboard.log" );
+
+=item * C<error_length>
+
+optional, defaults to 255.  Messages logged to the C<failure_log> (the
+C<error> table) are truncated to this length.  Setting this to zero means no
+truncation (although the database you are using may truncate this for you).
 
 =back
 

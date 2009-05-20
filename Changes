@@ -4,6 +4,7 @@ Revision history for TheSchwartz-Moosified
         Support prefix (Thanks to Mark Fowler and Tatsuhiko Miyagawa, From TheSchwartz::Simple)
         Add prefix support for PostgreSQL
         Remove Socialtext-specific tests for PostgreSQL
+        Add "error_length" option.
 
 0.04    2009.5.11
         Improve support for PostgreSQL.
