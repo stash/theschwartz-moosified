@@ -73,6 +73,7 @@ has 'scoreboard'  => (
 );
 
 has 'prefix' => ( is => 'rw', isa => 'Str', default => '' );
+has 'error_length' => ( is => 'rw', isa => 'Int', default => 255 );
 
 sub debug {
     my $self = shift;
@@ -136,6 +137,7 @@ sub insert {
         eval {
             $self->_try_insert($job,$dbh);
         };
+        $self->debug("insert failed: $@") if $@;
 
         next unless $job->jobid;
 

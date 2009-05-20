@@ -42,7 +42,7 @@ CREATE TABLE PREFIX_note (
 CREATE TABLE PREFIX_error (
         error_time      INTEGER NOT NULL,
         jobid           BIGINT NOT NULL,
-        message         VARCHAR(255) NOT NULL,
+        message         TEXT NOT NULL,
         funcid          INT NOT NULL DEFAULT 0
 );
 

@@ -75,13 +75,17 @@ sub as_hashref {
 
 sub add_failure {
     my $job = shift;
-    my ($msg) = @_;
+    my $msg = shift;
+    $msg = '' unless defined $msg;
     
     my $table_error = $job->handle->client->prefix . 'error';
+    if (my $len = $job->handle->client->error_length) {
+        $msg = substr($msg,0,$len);
+    }
     my $sql = qq~INSERT INTO $table_error (error_time, jobid, message, funcid) VALUES (?, ?, ?, ?)~;
     my $dbh = $job->dbh;
     my $sth = $dbh->prepare($sql);
-    $sth->execute(time(), $job->jobid, $msg || '', $job->funcid);
+    $sth->execute(time(), $job->jobid, $msg, $job->funcid);
 
     # and let's lazily clean some errors while we're here.
     my $maxage = $TheSchwartz::Moosified::T_ERRORS_MAX_AGE || (86400*7);
