@@ -57,19 +57,7 @@ has 'funcmap_cache' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'scoreboard'  => (
     is => 'rw',
     isa => 'Str',
-    trigger => sub {
-        my ($self, $dir) = @_;
-        
-        return unless $dir;
-        return if (-f $dir); # no endless loop
-
-        # They want the scoreboard but don't care where it goes
-        if (($dir eq '1') or ($dir eq 'on')) {
-            $dir = File::Spec->tmpdir();
-        }
-
-        $self->{scoreboard} = $dir."/theschwartz.scoreboard.$$";
-    }
+    trigger => \&_trigger_scoreboard,
 );
 
 has 'prefix' => ( is => 'rw', isa => 'Str', default => '' );
@@ -523,6 +511,20 @@ sub _funcmap_cache {
         $client->funcmap_cache->{$dbid} = $cache;
     }
     return $client->funcmap_cache->{$dbid};
+}
+
+sub _trigger_scoreboard {
+    my ($self, $dir) = @_;
+    
+    return unless $dir;
+    return if (-f $dir); # no endless loop
+
+    # They want the scoreboard but don't care where it goes
+    if (($dir eq '1') or ($dir eq 'on')) {
+        $dir = File::Spec->tmpdir();
+    }
+
+    $self->{scoreboard} = $dir."/theschwartz.scoreboard.$$";
 }
 
 sub start_scoreboard {
