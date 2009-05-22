@@ -1,3 +1,9 @@
+libtheschwartz-moosified-perl (0.04+0.05-1) unstable; urgency=low
+
+  * Pre-release build of 0.05
+
+ -- Jeremy Stashewsky <stash@topaz.socialtext.net>  Thu, 21 May 2009 15:39:48 -0700
+
 libtheschwartz-moosified-perl (0.04-2) unstable; urgency=low
 
   * Now depends on moose 0.79
