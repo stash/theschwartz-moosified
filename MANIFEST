@@ -16,10 +16,12 @@ t/003_insert.t
 t/004_list_jobs.t
 t/005_unique.t
 t/006_worker.t
+t/007_error_log.t
 t/010_cleanup.t
 t/011_retry-delay.t
 t/012_scoreboard.t
 t/013_coalesce.t
+t/999_postgres.t
 t/pod.t
 t/Utils.pm
 schema/Pg.sql
