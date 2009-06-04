@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use t::Utils;
 use TheSchwartz::Moosified;
-plan tests => 50;
+plan tests => 52;
 
 foreach $::prefix ("", "someprefix") {
 
