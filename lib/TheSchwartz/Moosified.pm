@@ -79,8 +79,10 @@ sub _try_insert {
     my $self = shift;
     my $job = shift;
     my $dbh = shift;
+
+    $job->funcid( $self->funcname_to_id( $dbh, $job->funcname ) );
+
     run_in_txn {
-        $job->funcid( $self->funcname_to_id( $dbh, $job->funcname ) );
         $job->insert_time(time());
 
         my $row = $job->as_hashref;
