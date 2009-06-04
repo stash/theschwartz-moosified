@@ -270,7 +270,7 @@ sub list_jobs {
         };
     }
     
-    my $limit    = $arg->{limit} || $FIND_JOB_BATCH_SIZE;
+    my $limit = $arg->{limit} || $FIND_JOB_BATCH_SIZE;
 
     my @jobs;
     for my $dbh ( $self->shuffled_databases ) {
@@ -288,12 +288,13 @@ sub list_jobs {
             }
 
             my $table_job = $self->prefix . 'job';
-            my $sql = qq~SELECT * FROM $table_job WHERE funcid $funcop $funcid $order_by LIMIT $limit~;
+            my $sql = qq~SELECT * FROM $table_job WHERE funcid $funcop $funcid~;
             my @value = ();
             for (@options) {
                 $sql .= " AND $_->{key} $_->{op} ?";
                 push @value, $_->{value};
             }
+            $sql .= qq~ $order_by LIMIT $limit~;
 
             my $sth = $dbh->prepare_cached($sql);
             $sth->execute(@value);

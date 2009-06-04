@@ -77,6 +77,9 @@ run_test {
     is $row->jobid,    2;
     is $row->priority, 2;
 
+    @jobs = $sch2->list_jobs({funcname => 'fetch2'}, run_after => 0);
+    is(scalar @jobs, 2, '2 jobs with run_after <= 0');
 };
 
 }
+
