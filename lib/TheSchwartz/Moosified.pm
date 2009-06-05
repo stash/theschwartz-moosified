@@ -180,6 +180,7 @@ sub find_job_for_workers {
                 my $job = TheSchwartz::Moosified::Job->new( $ref );
                 push @jobs, $job;
             }
+            $sth->finish;
         };
 #        if ($@) {
 #
@@ -313,6 +314,7 @@ sub list_jobs {
                 }
                 push @jobs, $job;
             }
+            $sth->finish;
         };
     }
 
@@ -359,6 +361,7 @@ sub _find_job_with_coalescing {
                 my $job = TheSchwartz::Moosified::Job->new( $ref );
                 push @jobs, $job;
             }
+            $sth->finish;
         };
 #        if ($@) {
 #
@@ -487,8 +490,9 @@ sub funcname_to_id {
             my $sth = $dbh->prepare_cached(
                 "SELECT funcid FROM $table_funcmap WHERE funcname = ?");
             $sth->execute($funcname);
-            $id = $sth->fetchrow_arrayref->[0]
-                or croak "Can't find or create funcname $funcname: $@";
+            ($id) = $sth->fetchrow_array;
+            $sth->finish;
+            croak "Can't find or create funcname $funcname: $@" unless $id;
         }
 
         $cache->{funcname2id}{ $funcname } = $id;
@@ -511,6 +515,7 @@ sub _funcmap_cache {
             $cache->{funcname2id}{ $row->[1] } = $row->[0];
             $cache->{funcid2name}{ $row->[0] } = $row->[1];
         }
+        $sth->finish;
         $client->funcmap_cache->{$dbid} = $cache;
     }
     return $client->funcmap_cache->{$dbid};
