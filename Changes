@@ -1,5 +1,9 @@
 Revision history for TheSchwartz-Moosified
 
+0.05_002 2009.6.4
+        Fix query parameters to list_jobs();
+        Prevent some transient transaction errors and warnings under PostgreSQL
+
 0.05_001 2009.5.21
         Support prefix (Thanks to Mark Fowler and Tatsuhiko Miyagawa, From TheSchwartz::Simple)
         Add prefix support for PostgreSQL
