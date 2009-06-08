@@ -1,3 +1,9 @@
+libtheschwartz-moosified-perl (0.05-4) unstable; urgency=low
+
+  * Re-build of 0.05_003
+
+ -- Jeremy Stashewsky <stash@topaz.socialtext.net>  Mon,  8 Jun 2009 15:10:32 -0700
+
 libtheschwartz-moosified-perl (0.05-3) unstable; urgency=low
 
   * Fix postgres prioritization bug, build 0.05_003
