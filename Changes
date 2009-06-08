@@ -1,5 +1,8 @@
 Revision history for TheSchwartz-Moosified
 
+0.05_003
+        Fix job prioritization bug
+
 0.05_002 2009.6.4
         Fix query parameters to list_jobs();
         Prevent some transient transaction errors and warnings under PostgreSQL
