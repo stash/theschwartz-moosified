@@ -238,11 +238,11 @@ sub replace_with {
     ## The new jobs @jobs should be inserted into the same database as $job,
     ## which they're replacing.
     run_in_txn {
-        ## Insert the new jobs.
-        $job->client->insert($_) for @jobs;
-
         ## Mark the original job as completed successfully.
         $job->completed;
+
+        ## Insert the new jobs.
+        $job->client->_try_insert($_, $job->dbh) for @jobs;
     } $job->dbh;
 }
 
