@@ -1,6 +1,10 @@
 Revision history for TheSchwartz-Moosified
 
-0.05_003
+0.05_004 2009.6.18
+        Fix replace_with() bugs (can't insert same uniqkey, goes to different dbs randomly)
+        Fix some database timestamps for Pg
+
+0.05_003 2009.6.8
         Fix job prioritization bug
 
 0.05_002 2009.6.4
