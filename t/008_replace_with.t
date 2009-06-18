@@ -21,7 +21,7 @@ run_test {
     my $jh = $sch->insert(TheSchwartz::Moosified::Job->new(
         funcname => 'Worker',
         uniqkey => 'aaaa',
-        arg => 'again',
+        arg => { again => 'again' },
     ));
     ok $jh && $jh->jobid, "created job";
 
@@ -43,9 +43,9 @@ run_test {
         my $clone = TheSchwartz::Moosified::Job->new(
             funcname => $job->funcname,
             uniqkey => $job->uniqkey,
-            arg => '',
+            arg => { again => 0 }
         );
-        if ($job->arg eq 'again') {
+        if ($job->arg->{again}) {
             $job->replace_with($clone);
         }
         else {

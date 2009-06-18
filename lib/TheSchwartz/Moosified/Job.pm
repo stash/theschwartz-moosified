@@ -237,6 +237,11 @@ sub replace_with {
 
     ## The new jobs @jobs should be inserted into the same database as $job,
     ## which they're replacing.
+    for my $new_job (@jobs) {
+        next unless ref $new_job->arg;
+        $new_job->arg( Storable::nfreeze( $new_job->arg ) );
+    }
+
     run_in_txn {
         ## Mark the original job as completed successfully.
         $job->completed;
