@@ -159,7 +159,7 @@ sub set_exit_status {
     # default n is 10% of the time, doing 100 deletes.
     my $clean_thres = $TheSchwartz::Moosified::T_EXITSTATUS_CLEAN_THRES || 0.10;
     if (rand() < $clean_thres) {
-        my $unixtime = sql_for_unixtime();
+        my $unixtime = sql_for_unixtime($dbh);
         $dbh->do(qq~DELETE FROM $table_exitstatus WHERE delete_after < $unixtime~);
     }
 
