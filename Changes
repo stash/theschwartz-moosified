@@ -1,5 +1,8 @@
 Revision history for TheSchwartz-Moosified
 
+0.05_005 2009.6.18
+        replace_with() supports args that are references again (oops)
+
 0.05_004 2009.6.18
         Fix replace_with() bugs (can't insert same uniqkey, goes to different dbs randomly)
         Fix some database timestamps for Pg

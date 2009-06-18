@@ -1,3 +1,9 @@
+libtheschwartz-moosified-perl (0.05-6) unstable; urgency=low
+
+  * 0.05_005
+
+ -- Jeremy Stashewsky <stash@topaz.socialtext.net>  Thu, 18 Jun 2009 13:04:25 -0700
+
 libtheschwartz-moosified-perl (0.05-5) unstable; urgency=low
 
   * Build of 0.05_004

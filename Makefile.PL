@@ -10,7 +10,7 @@ WriteMakefile
                            'Scalar::Util' => '0',
                            'Test::More' => '0'
                          },
-          'INSTALLDIRS' => 'site',
+          'INSTALLDIRS' => 'vendor',
           'EXE_FILES' => []
         )
 ;
