@@ -1,6 +1,6 @@
 libtheschwartz-moosified-perl (0.05-5) unstable; urgency=low
 
-  * Build of 0.05_003 with replace_with() and sql_for_unixtime() fixes.
+  * Build of 0.05_004
 
  -- Jeremy Stashewsky <stash@topaz.socialtext.net>  Thu, 18 Jun 2009 09:29:47 -0700
 
