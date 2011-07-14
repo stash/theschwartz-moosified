@@ -1,5 +1,9 @@
 Revision history for TheSchwartz-Moosified
 
+0.06    2011.7.14
+        Fix problem with tests loading old versions of the code.
+        Redo Postgres setup code
+
 0.05_005 2009.6.18
         replace_with() supports args that are references again (oops)
 
