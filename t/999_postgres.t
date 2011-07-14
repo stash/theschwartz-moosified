@@ -8,49 +8,53 @@ for my $mod (qw(DBD::Pg TAP::Harness IO::String)) {
     plan skip_all => "this test requires $mod" if $@;
 }
 
-unless ($ENV{PGCREATEDB}) {
-    $ENV{PGCREATEDB} = `which createdb`;
-    chomp $ENV{PGCREATEDB};
-    plan skip_all => 'Must have PGCREATEDB set to the location of "createdb"'
-        unless -x $ENV{PGCREATEDB};
-    diag "Set PGCREATEDB to $ENV{PGCREATEDB}";
-}
-
-unless ($ENV{PGDROPDB}) {
-    $ENV{PGDROPDB} = `which dropdb`;
-    chomp $ENV{PGDROPDB};
-    plan skip_all => 'Must have PGDROPDB set to the location of "dropdb"'
-        unless -x $ENV{PGDROPDB};
-    diag "Set PGDROPDB to $ENV{PGDROPDB}";
-}
-
 $ENV{TSM_TEST_PG} = 1;
 
-opendir my $dir, 't' or die "can't open test dir: $!";
-my @tests;
-for my $t (<t/*.t>) {
-    next if $t eq 't/999_postgres.t';
-    next unless $t =~ /\d/; # skips POD, boilerplate, etc.
-    #Test::More::diag $t;
-    push @tests, $t;
+test_setup: {
+    eval {
+        run_test { 
+            my $dbh = shift;
+            die "can't ping" unless $dbh->ping;
+            diag "Connected to postgres ".$dbh->pg_server_version;
+        };
+    };
+    if ($@) {
+        if ($@ =~ /^SETUP:/) {
+            diag $@;
+            plan skip_all => 'cannot set-up postgres database';
+        }
+        else {
+            die $@;
+        }
+    }
 }
-closedir $dir;
+
+my @tests;
+read_tests: {
+    opendir my $dir, 't' or plan skip_all => "can't open test dir: $!";
+    for my $t (<t/*.t>) {
+        next if $t eq 't/999_postgres.t';
+        next unless $t =~ /\d/; # skips POD, boilerplate, etc.
+        push @tests, $t;
+    }
+    closedir $dir;
+}
 
 plan tests => scalar @tests;
 
 my $th = TAP::Harness->new({
-        formatter_class => 'TAP::Formatter::NULL',
-        verbosity => 1,
-        callbacks => {
-            after_test => sub { 
-                my ($job_as_array, $parser) = @_;
-                ok(!$parser->has_problems, "Pg re-test for $job_as_array->[1]");
-                if ($parser->has_problems) {
-                    diag "Try running $job_as_array->[0] with TSM_TEST_PG=1";
-                }
-            },
+    formatter_class => 'TAP::Formatter::NULL',
+    verbosity => 1,
+    callbacks => {
+        after_test => sub { 
+            my ($job_as_array, $parser) = @_;
+            ok(!$parser->has_problems, "Pg re-test for $job_as_array->[1]");
+            if ($parser->has_problems) {
+                diag "Try running $job_as_array->[0] with TSM_TEST_PG=1";
+            }
         },
-    });
+    },
+});
 $th->runtests(@tests);
 
 {

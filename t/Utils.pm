@@ -10,6 +10,8 @@ our @EXPORT = (@Test::More::EXPORT, 'run_test');
 eval 'require File::Temp';
 plan skip_all => 'this test requires File::Temp' if $@;
 if ($ENV{TSM_TEST_PG}) {
+    plan skip_all => 'DBD::Pg support not working on windows yet'
+        if $^O =~ /windows/i;
     eval 'require DBD::Pg';
     plan skip_all => 'this test requires DBD::Pg' if $@;
 }
@@ -23,6 +25,7 @@ our $dbcount = 0;
 sub run_test (&) {
     my $code = shift;
     local $dbcount = $dbcount+1;
+    local $@;
 
     my $tmp = File::Temp->new;
     $tmp->close();
@@ -33,21 +36,46 @@ sub run_test (&) {
         my $createdb = $ENV{PGCREATEDB} || 'createdb';
         $dbname = $ENV{PGDBPREFIX} || 'schwartz';
         $dbname .= $dbcount;
-        system("$createdb -E UTF-8 -q $dbname")
-            and die "can't create db '$dbname' with '$createdb'";
 
-        $dbh = DBI->connect("dbi:Pg:database=$dbname", $ENV{user}, '', {
-                AutoCommit => 1,
-                RaiseError => 0,
-                PrintError => 0,
-            }) or die $DBI::errstr;
+        my $diag = File::Temp->new(UNLINK => 1);
+        my $rv = do {
+            local %ENV = %ENV;
+            delete $ENV{$_} for grep /^LC_/, keys %ENV;
+            $ENV{LANG} = 'C';
+            system("$createdb -E UTF-8 -l en_US.UTF-8 $dbname > $diag 2>&1");
+        };
+        if ($rv) {
+            $diag->seek(0,0);
+            my $txt = do {local $/; <$diag>};
+            diag "createdb failed: $txt";
+            diag "HINT: you can set the PGUSER env-var to control who to connect as";
+            diag "HINT: you can set the PGCREATEDB/PGDROPDB env-vars to pick createdb/dropdb invocations to use";
+
+            if ($txt =~ /authentication failed for user/) {
+                diag "HINT: you may need to createuser or adjust pg_hba.conf";
+            }
+            elsif ($txt =~ /permission denied to create database/) {
+                diag "HINT: user needs create database permissions (the -d flag for createuser)";
+            }
+            elsif ($txt =~ /database "\Q$dbname\E" already exists/) {
+                diag "HINT: you may need to drop '$dbname' manually";
+            }
+
+            die "SETUP: can't set up postgres database '$dbname'";
+        }
+
+        $dbh = DBI->connect("dbi:Pg:database=$dbname", '', '', {
+            AutoCommit => 1,
+            RaiseError => 1,
+            PrintError => 0,
+        }) or die "SETUP: $DBI::errstr";
     }
     else {
         $dbname = $tmp->filename;
         $dbh = DBI->connect("dbi:SQLite:dbname=$dbname", '', '', {
-                RaiseError => 1,
-                PrintError => 0,
-            }) or die $DBI::err;
+            RaiseError => 1,
+            PrintError => 0,
+        }) or die $DBI::errstr;
 
         # work around for DBD::SQLite's resource leak
         tie my %blackhole, 't::Utils::Blackhole';
@@ -56,13 +84,26 @@ sub run_test (&) {
 
     init_schwartz($dbh);
 
-    $code->($dbh); # do test
+    eval {
+        $code->($dbh); # do test
+    };
+    my $e = $@ if $@;
 
-    $dbh->disconnect;
+    eval {
+        $dbh->disconnect;
 
-    if ($ENV{TSM_TEST_PG}) {
-        my $dropdb = $ENV{PGDROPDB} || 'dropdb';
-        system("$dropdb -q $dbname");
+        if ($ENV{TSM_TEST_PG}) {
+            my $dropdb = $ENV{PGDROPDB} || 'dropdb';
+            system("$dropdb -e $dbname") and die "can't dropdb $dbname";
+        }
+    };
+    if ($@) {
+        diag "while disconnecting/dropping: $@";
+    }
+
+    if ($e) {
+        $@ = $e;
+        die $@;
     }
 }
 
