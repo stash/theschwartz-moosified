@@ -1,6 +1,8 @@
 package TheSchwartz::Moosified;
 
 use Moose;
+use Try::Tiny;
+
 use Moose::Util::TypeConstraints;
 use Carp;
 use Scalar::Util qw( refaddr );
@@ -124,10 +126,11 @@ sub insert {
     $job->arg( Storable::nfreeze( $job->arg ) ) if ref $job->arg;
 
     for my $dbh ( $self->shuffled_databases ) {
-        eval {
+        try {
             $self->_try_insert($job,$dbh);
+        } catch {
+            warn "Failed inserting job into database: $_\n";
         };
-        $self->debug("insert failed: $@") if $@;
 
         next unless $job->jobid;
 
@@ -161,7 +164,7 @@ sub find_job_for_workers {
         my $order_by = $client->prioritize ? order_by_priority($dbh) : '';
 
         my @jobs;
-        eval {
+        try {
             ## Search for jobs in this database where:
             ## 1. funcname is in the list of abilities this $client supports;
             ## 2. the job is scheduled to be run (run_after is in the past);
@@ -181,10 +184,9 @@ sub find_job_for_workers {
                 push @jobs, $job;
             }
             $sth->finish;
+        } catch {
+            $self->debug("Error while finding jobs for workers: $_");
         };
-#        if ($@) {
-#
-#        }
 
         my $job = $client->_grab_a_job($dbh, @jobs);
         return $job if $job;
