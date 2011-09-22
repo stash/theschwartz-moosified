@@ -129,7 +129,7 @@ sub insert {
         try {
             $self->_try_insert($job,$dbh);
         } catch {
-            warn "Failed inserting job into database: $_\n";
+            carp "Failed inserting job into database: $_\n";
         };
 
         next unless $job->jobid;
@@ -185,7 +185,7 @@ sub find_job_for_workers {
             }
             $sth->finish;
         } catch {
-            $self->debug("Error while finding jobs for workers: $_");
+            carp "Error while finding jobs for workers: $_";
         };
 
         my $job = $client->_grab_a_job($dbh, @jobs);
