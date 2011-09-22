@@ -1,5 +1,6 @@
 package TheSchwartz::Moosified::Job;
 
+use Try::Tiny;
 use Moose;
 use Storable ();
 use TheSchwartz::Moosified::Utils qw/sql_for_unixtime run_in_txn/;
@@ -259,17 +260,20 @@ sub set_as_current {
 sub _cond_thaw {
     my $data = shift;
 
-    my $magic = eval { Storable::read_magic($data); };
-    if ($magic && $magic->{major} && $magic->{major} >= 2 && $magic->{major} <= 5) {
-        my $thawed = eval { Storable::thaw($data) };
-        if ($@) {
-            # false alarm... looked like a Storable, but wasn't.
-            return $data;
+    try {
+        # Attempt to load from Storable, if we have the magic data, check the
+        # versions
+        my $magic = Storable::read_magic($data);
+        # If the version is correct, we attempt to thaw the data.
+        if ( $magic && $magic->{major} && $magic->{major} >= 2 && $magic->{major} <= 5) {
+            try {
+                my $thawed = Storable::thaw($data);
+                # Successful thaw, set $data to what we $thawed
+                $data = $thawed;
+            };
         }
-        return $thawed;
-    } else {
-        return $data;
-    }
+    };
+    return $data;
 }
 
 no Moose;

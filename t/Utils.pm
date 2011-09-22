@@ -2,7 +2,7 @@ package t::Utils;
 use strict;
 use warnings;
 use base qw/Exporter/;
-use blib;
+#use blib;
 use Test::More;
 use DBI;
 our @EXPORT = (@Test::More::EXPORT, 'run_test');

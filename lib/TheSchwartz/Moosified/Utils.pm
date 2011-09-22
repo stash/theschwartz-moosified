@@ -1,5 +1,7 @@
 package TheSchwartz::Moosified::Utils;
 
+use Try::Tiny;
+
 use base 'Exporter';
 use Carp;
 use vars qw/@EXPORT_OK/;
@@ -81,7 +83,7 @@ sub run_in_txn (&$) {
 
     my @rv;
     my $rv;
-    eval {
+    try {
         $dbh->begin_work;
         if (wantarray) {
             @rv = $code->();
@@ -90,8 +92,10 @@ sub run_in_txn (&$) {
             $rv = $code->();
         }
         $dbh->commit;
+    } catch {
+        $dbh->rollback;
+        die $_;
     };
-    if (my $err = $@) { eval { $dbh->rollback }; die $err }
 
     return @rv if wantarray;
     return $rv;
