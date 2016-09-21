@@ -28,3 +28,4 @@ t/pod.t
 t/Utils.pm
 schema/Pg.sql
 schema/SQLite.sql
+META.json
