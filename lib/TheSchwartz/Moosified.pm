@@ -177,8 +177,7 @@ sub find_job_for_workers {
             my $sth = $dbh->prepare_cached($sql);
             $sth->execute();
             while ( my $ref = $sth->fetchrow_hashref ) {
-                my $job = TheSchwartz::Moosified::Job->new( $ref );
-                push @jobs, $job;
+                push @jobs, $ref;
             }
             $sth->finish;
         };
@@ -204,7 +203,9 @@ sub _grab_a_job {
     @jobs = shuffle(@jobs);
 
   JOB:
-    while (my $job = shift @jobs) {
+    while (my $ref = shift @jobs) {
+        my $job = TheSchwartz::Moosified::Job->new( $ref );
+
         ## Convert the funcid to a funcname, based on this database's map.
         $job->funcname( $client->funcid_to_name($dbh, $job->funcid) );
 
@@ -358,8 +359,7 @@ sub _find_job_with_coalescing {
             $sth->execute( $funcid, $coval );
             while ( my $ref = $sth->fetchrow_hashref ) {
                 $ref->{funcname} = $funcname;
-                my $job = TheSchwartz::Moosified::Job->new( $ref );
-                push @jobs, $job;
+                push @jobs, $ref;
             }
             $sth->finish;
         };
