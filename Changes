@@ -1,5 +1,9 @@
 Revision history for TheSchwartz-Moosified
 
+0.07    2016.9.21
+        Improve performance of find_job_for_workers() by avoiding creating
+        objects that we do not use.
+
 0.06    2011.7.14
         Fix problem with tests loading old versions of the code.
         Redo Postgres setup code

@@ -792,9 +792,11 @@ Fayland Lam, C<< <fayland at gmail.com> >>
 
 Jeremy Stashewsky, C<< <jstash+cpan at gmail.com> >>
 
+Luke Closs C<< <cpan at 5thplane.com> >>
+
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Fayland Lam, all rights reserved.
+Copyright 2008,2016 Fayland Lam, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
